@@ -29,8 +29,7 @@
         const sendMessageToServer = e => {
           const message = document.querySelector('#message');
           socket.emit('msgToServer', { msg: message.value });
-
-          message.value = '';
+          console.log(message.value);
         };
 
         const sendMessage = document.querySelector('#send');

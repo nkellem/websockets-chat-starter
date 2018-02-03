@@ -37,6 +37,7 @@ const onJoined = (sock) => {
 
     // if username is taken, bail out
     if (userNameTaken) {
+      socket.disconnect();
       return;
     }
 
