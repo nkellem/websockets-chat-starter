@@ -16,37 +16,36 @@ const app = http.createServer(onRequest).listen(PORT);
 
 console.log(`Listening on localhost:${PORT}`);
 
-//pass in the http server into socketio and grab the websocket sever as io
+// pass in the http server into socketio and grab the websocket sever as io
 const io = socketio(app);
 
-//object to hold all of our users
+// object to hold all of our users
 const users = {};
 
 const onJoined = (sock) => {
   const socket = sock;
 
-  socket.on('join', data => {
-    //check to see if the username has already been taken
+  socket.on('join', (data) => {
+    // check to see if the username has already been taken
     let userNameTaken = false;
-    Object.keys(users).forEach(user => {
+    Object.keys(users).forEach((user) => {
       if (users[user].toLowerCase() === data.name.toLowerCase()) {
         socket.emit('msg', { name: 'server', msg: 'Username already taken' });
         userNameTaken = true;
-        return;
       }
     });
 
-    //if username is taken, bail out
+    // if username is taken, bail out
     if (userNameTaken) {
       return;
     }
 
-    //add new user to the users object
+    // add new user to the users object
     users[data.name] = data.name;
 
     console.dir(users);
 
-    //message back to new user
+    // message back to new user
     const joinMsg = {
       name: 'server',
       msg: `There are ${Object.keys(users).length} users online`,
@@ -57,7 +56,7 @@ const onJoined = (sock) => {
 
     socket.join('room1');
 
-    //announcement to everyone in the room
+    // announcement to everyone in the room
     const response = {
       name: 'server',
       msg: `${data.name} has joined the room`,
@@ -65,7 +64,7 @@ const onJoined = (sock) => {
     socket.broadcast.to('room1').emit('msg', response);
 
     console.log(`${data.name} joined`);
-    //success message back to new user
+    // success message back to new user
     socket.emit('msg', { name: 'server', msg: 'You joined the room' });
   });
 };
@@ -73,13 +72,13 @@ const onJoined = (sock) => {
 const onMsg = (sock) => {
   const socket = sock;
 
-  socket.on('msgToServer', data => {
+  socket.on('msgToServer', (data) => {
     const action = data.msg.split(' ');
-    const name = socket.name;
+    const { name } = socket;
     if (action[0] === '/me') {
-      io.sockets.in('room1').emit('msg', { name: 'server', msg: `${name} ${data.msg.substring(data.msg.indexOf(' ')+1)}` });
+      io.sockets.in('room1').emit('msg', { name: 'server', msg: `${name} ${data.msg.substring(data.msg.indexOf(' ') + 1)}` });
     } else if (data.msg === 'time') {
-      let date = new Date();
+      const date = new Date();
       socket.emit('msg', { name: 'server', msg: `The time is ${date.getHours()}:${date.getMinutes()}` });
     } else {
       io.sockets.in('room1').emit('msg', { name, msg: data.msg });
@@ -90,21 +89,20 @@ const onMsg = (sock) => {
 const onDisconnect = (sock) => {
   const socket = sock;
   socket.on('disconnect', () => {
-    let name = socket.name;
+    const { name } = socket;
 
-    io.sockets.in('room1').emit('msg', { name: 'server', msg: `${name} has left the room`});
+    io.sockets.in('room1').emit('msg', { name: 'server', msg: `${name} has left the room` });
     socket.leave('room1');
 
-    Object.keys(users).forEach(user => {
+    Object.keys(users).forEach((user) => {
       if (users[user] === name) {
         delete users[user];
-        return;
       }
     });
   });
 };
 
-io.sockets.on('connection', socket => {
+io.sockets.on('connection', (socket) => {
   console.log('started');
 
   onJoined(socket);
