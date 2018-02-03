@@ -1,16 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- import the websocket client library. You can code websockets from scratch
-         but we will just import a library. In this case we are using socket.io which is 
-         one of the most popular and feature rich websocket libraries.
-         
-         You can point the src for the script to any host online, but
-         by default the socket.io nodejs library will host the client library
-         online at your node.js address under /socket.io/socket.io.js 
-         You can disable that on the server if desired
-    -->
+    <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+    <script type="text/babel">
+      const connectSocket = e => {
+        const chat = document.querySelector('#chat');
+        const socket = io.connect();
+
+        socket.on('connect', () => {
+          console.log('connecting');
+
+          let user = document.querySelector('#username').value;
+
+          if (!user) {
+            user = 'unknown';
+          }
+
+          socket.emit('join', { name: user });
+        });
+
+        socket.on('msg', data => {
+          console.log(data);
+
+          chat.value += `${data.name}: ${data.msg}\n`;
+        });
+
+        const sendMessageToServer = e => {
+          const message = document.querySelector('#message');
+          socket.emit('msgToServer', { msg: message.value });
+
+          message.value = '';
+        };
+
+        const sendMessage = document.querySelector('#send');
+        sendMessage.addEventListener('click', sendMessageToServer);
+      };
+
+      const init = () => {
+        alert("Please pick a username and connect to the chat room");
+        const connect = document.querySelector('#connect');
+        connect.addEventListener('click', connectSocket);
+      };
+
+      window.onload = init;
+    </script>
 	<style>
 		textarea {
 			display: block;
@@ -26,7 +60,7 @@
 	<label for="message">Message:</label>
 	<input id="message" name="message" type="text"/>
 	<input id="send" type="button" value="send" />
-	
+
 	<textarea id="chat" rows="20" cols="40" readonly> </textarea>
 </body>
 </html>
